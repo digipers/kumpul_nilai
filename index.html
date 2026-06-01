@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover" />
+<meta name="theme-color" content="#1e3a8a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Aplikasi Konversi Nilai MA - Leger</title>
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+<style>
+* { box-sizing: border-box; }
+:root{--blue:#1e3a8a;--accent:#1e88e5;--remedial:#dc2626;}
+html,body{
+    margin:0;
+    padding:0;
+    width:100%;
+    overflow-x:hidden;
+    font-family: 'Segoe UI', Roboto, Arial, Helvetica, sans-serif;
+    background:#f1f5f9;
+}
+.sidebar{
+    position:fixed;
+    left:0;
+    top:0;
+    height:100%;
+    width:260px;
+    background:var(--blue);
+    color:#fff;
+    padding:18px;
+    box-sizing:border-box;
+    transform:translateX(-260px);
+    transition:transform .25s ease;
+    z-index:1200;
+    overflow-y:auto;
+}
+.sidebar.open{transform:translateX(0)}
+.sidebar h2{margin:0 0 10px;font-size:18px;text-align:center}
+.sidebar ul{list-style:none;padding:0;margin:10px 0 0}
+.sidebar ul li{padding:10px 12px;border-radius:6px;cursor:pointer;margin-bottom:6px;font-size:13px}
+.sidebar ul li:hover{background:rgba(255,255,255,0.12)}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;z-index:1100}
+.overlay.show{display:block}
+.main{
+    margin-left:0;
+    padding:12px;
+    width:100%;
+    max-width:100%;
+    overflow-x:hidden;
+    transition: margin-left 0.2s;
+}
+.toggleBtn{
+    position:fixed;
+    left:12px;
+    top:12px;
+    z-index:1300;
+    background:var(--blue);
+    color:#fff;
+    border:none;
+    padding:10px 14px;
+    border-radius:40px;
+    cursor:pointer;
+    font-size:18px;
+    box-shadow:0 2px 6px rgba(0,0,0,0.2);
+}
+.page{
+    display:none;
+    background:#fff;
+    padding:14px;
+    border-radius:16px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.05);
+    width:100%;
+    overflow-x:auto;
+}
+.page.show{display:block}
+h1 {
+    font-size: 1.6rem;
+    margin: 0 0 12px 0;
+    padding-top: 8px;
+    word-break: break-word;
+}
+h2 { font-size: 1.3rem; margin-top: 0; }
+label{ display:block; margin-top:8px; font-weight:600; font-size:0.85rem; }
+input,select,button{ font-size:14px; }
+input[type="text"], input[type="number"], select{
+    padding:10px 10px;
+    border:1px solid #cbd5e1;
+    border-radius:12px;
+    width:100%;
+    max-width:100%;
+    box-sizing:border-box;
+    background:#fff;
+}
+.btn-primary{ background:var(--accent); color:#fff; border:0; padding:10px 16px; border-radius:30px; cursor:pointer; font-weight:600; }
+.btn-success{ background:#10b981; color:#fff; border:0; padding:10px 16px; border-radius:30px; cursor:pointer; font-weight:600; }
+.btn-warning{ background:#f59e0b; color:#fff; border:0; padding:10px 16px; border-radius:30px; cursor:pointer; font-weight:600; }
+.btn-danger{ background:#dc2626; color:#fff; border:0; padding:10px 16px; border-radius:30px; cursor:pointer; font-weight:600; }
+table{ width:100%; border-collapse:collapse; margin-top:12px; }
+th,td{ padding:10px 8px; border:1px solid #e2e8f0; text-align:center; vertical-align:middle; font-size:13px; }
+th{ background:#f8fafc; font-weight:600; }
+.table-wrapper { width: 100%; overflow-x: auto; margin-top: 12px; border-radius: 12px; }
+.param-container { background: #f8fafc; padding: 12px; border-radius: 20px; margin: 12px 0; }
+.param-group { display: flex; flex-direction: column; gap: 12px; }
+.param-item { flex: 1; }
+.button-group-action {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 16px;
+    margin-bottom: 8px;
+    justify-content: flex-start;
+}
+.button-group-action button {
+    flex: 1 0 auto;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 40px;
+    border: none;
+    cursor: pointer;
+    background: #eef2ff;
+    color: #1e3a8a;
+}
+.input-nilai-jBenar {
+    background-color: #fff9c4 !important;
+    border: 2px solid #f9a825 !important;
+    border-radius: 10px;
+    padding: 6px;
+    width: 80px;
+    font-weight: bold;
+    text-align: center;
+}
+.param-input {
+    background-color: #e8f0fe !important;
+    border: 2px solid #1e88e5 !important;
+    border-radius: 12px;
+    padding: 10px;
+    width: 100%;
+}
+.dashboard-stats { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+.stat-card { background: #fff; border: 1px solid #eef2ff; padding: 12px; border-radius: 20px; flex: 1; text-align: center; }
+.stat-number { font-weight: 800; font-size: 28px; }
+.print-area{display:none}
+.backup-panel {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 16px;
+    padding: 12px;
+    margin-top: 16px;
+}
+.remedial-row { background-color: #fee2e2 !important; }
+.remedial-info {
+    background: #fef2f2;
+    border-left: 4px solid #dc2626;
+    padding: 12px;
+    margin-top: 12px;
+    border-radius: 12px;
+    font-size: 13px;
+}
+.current-data-info {
+    background: #e0f2fe;
+    padding: 8px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    margin-bottom: 12px;
+    text-align: center;
+}
+.nilai-update-indicator {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #10b981;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    z-index: 1000;
+}
+.google-sheets-status {
+    background: #e8f0fe;
+    border-radius: 12px;
+    padding: 8px 12px;
+    margin-top: 8px;
+    margin-bottom: 12px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.status-badge {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 6px;
+}
+.status-badge.active { background: #10b981; box-shadow: 0 0 4px #10b981; }
+.status-badge.inactive { background: #ef4444; }
+@media print {
+    @page { size: A4 portrait; margin: 12mm; }
+    body * { visibility: hidden; }
+    .print-area, .print-area * { visibility: visible; }
+    .print-area { position: fixed; inset: 0; padding: 8px; }
+}
+</style>
+</head>
+<body>
+<button id="toggleBtn" class="toggleBtn" title="Buka/Tutup menu">☰</button>
+<nav id="sidebar" class="sidebar">
+  <h2>📱 Aplikasi Nilai MA</h2>
+  <ul>
+    <li data-page="dashboard">📊 Dashboard</li>
+    <li data-page="identitas">🏫 Identitas</li>
+    <li data-page="inputnilai">✍️ Input Nilai</li>
+    <li data-page="remedial">📝 Data Remedial</li>
+    <li data-page="backup">💾 Backup & Restore</li>
+  </ul>
+</nav>
+<div id="overlay" class="overlay"></div>
+<main class="main" id="main">
+  <h1>✨ Konversi Nilai Siswa MA</h1>
+  
+  <section id="dashboard" class="page show">
+    <h2>📈 Ringkasan Data</h2>
+    <div class="dashboard-stats">
+      <div class="stat-card"><div>Kelas X</div><div class="stat-number" id="countX">0</div></div>
+      <div class="stat-card"><div>Kelas XI</div><div class="stat-number" id="countXI">0</div></div>
+      <div class="stat-card"><div>Kelas XII</div><div class="stat-number" id="countXII">0</div></div>
+      <div class="stat-card"><div>Siswa Remedial</div><div class="stat-number" id="totalRemedial">0</div></div>
+    </div>
+    <div class="google-sheets-status" id="googleSheetsStatus">
+      <span class="status-badge" id="gsStatusBadge"></span>
+      <span id="gsStatusText">Mengecek koneksi Google Sheets...</span>
+    </div>
+  </section>
+
+  <section id="identitas" class="page">
+    <h2>🏷️ Identitas & Kelas</h2>
+    <label>📚 Mata Pelajaran</label>
+    <select id="mapel">
+      <optgroup label="Kelompok Keagamaan">
+        <option value="AlQuranHadis">Al-Qur'an Hadis</option>
+        <option value="AkidahAkhlak">Akidah Akhlak</option>
+        <option value="Fikih">Fikih</option>
+        <option value="SKI">Sejarah Kebudayaan Islam (SKI)</option>
+        <option value="BahasaArab">Bahasa Arab</option>
+        <option value="Aswaja">Aswaja</option>
+      </optgroup>
+      <optgroup label="Kelompok Umum">
+        <option value="PKn">PKn</option>
+        <option value="BahasaIndonesia">Bahasa Indonesia</option>
+        <option value="BahasaInggris">Bahasa Inggris</option>
+        <option value="Matematika">Matematika</option>
+        <option value="Sejarah">Sejarah</option>
+        <option value="Geografi">Geografi</option>
+        <option value="Ekonomi">Ekonomi</option>
+        <option value="Sosiologi">Sosiologi</option>
+        <option value="Fisika">Fisika</option>
+        <option value="SeniBudaya">Seni Budaya</option>
+        <option value="PJOK">PJOK</option>
+        <option value="Kewirausahaan">Kewirausahaan</option>
+      </optgroup>
+    </select>
+    
+    <label>👩‍🏫 Guru Mata Pelajaran</label>
+    <input type="text" id="namaGuru" placeholder="Nama Guru">
+    
+    <label>📅 Semester</label>
+    <select id="semester">
+      <option>Ganjil</option>
+      <option>Genap</option>
+    </select>
+    
+    <label>🗓️ Tahun Pelajaran</label>
+    <input type="text" id="tahunPelajaran" placeholder="2024/2025" value="2024/2025">
+    
+    <div style="margin-top:20px">
+      <button class="btn-primary" onclick="simpanIdentitasDanPindah()" style="width:100%">💾 Simpan & Lanjut Input Nilai</button>
+    </div>
+  </section>
+
+  <section id="inputnilai" class="page">
+    <h2>🎯 Input & Konversi Nilai</h2>
+    
+    <div class="current-data-info">
+      📌 <strong>Mapel:</strong> <span id="activeMapel">-</span> | 
+      <strong>Guru:</strong> <span id="activeGuru">-</span> |
+      <strong>Semester:</strong> <span id="activeSemester">-</span> |
+      <strong>Tahun:</strong> <span id="activeTahun">-</span>
+    </div>
+    
+    <label>📌 Pilih Kelas</label>
+    <select id="kelasSelect" onchange="gantiKelas()">
+      <option value="X">X (Sepuluh)</option>
+      <option value="XI">XI (Sebelas)</option>
+      <option value="XII">XII (Dua Belas)</option>
+    </select>
+
+    <div class="param-container">
+      <div class="param-group">
+        <div class="param-item">
+          <label>🔢 Jumlah Soal</label>
+          <input type="number" id="jumSoal" placeholder="contoh: 20" class="param-input" onchange="simpanParameterKeLocal(); hitungDanUpdateTampilanNilai()">
+        </div>
+        <div class="param-item">
+          <label>⬇️ Nilai Terendah (Konversi)</label>
+          <input type="number" id="minKonv" placeholder="75" class="param-input" onchange="simpanParameterKeLocal(); hitungDanUpdateTampilanNilai()">
+        </div>
+        <div class="param-item">
+          <label>⬆️ Nilai Tertinggi (Konversi)</label>
+          <input type="number" id="maxKonv" placeholder="95" class="param-input" onchange="simpanParameterKeLocal(); hitungDanUpdateTampilanNilai()">
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:12px; background:#e6f7ec; padding:8px 12px; border-radius:16px; font-size:13px; text-align:center;">
+      📊 Rentang Nilai Asli: <strong><span id="autoMinAsli">N/A</span> - <span id="autoMaxAsli">N/A</span></strong>
+    </div>
+
+    <div class="table-wrapper">
+      <table id="tblInputNilai">
+        <thead>
+          <tr><th>No</th><th>Nama</th><th>✅ J. Benar</th><th>📐 Nilai Asli</th><th>🎯 Nilai Jadi</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div id="remedialInfo" class="remedial-info" style="display:none">
+      <strong>⚠️ Informasi Remedial:</strong> <span id="remedialCountText"></span>
+    </div>
+
+    <div class="button-group-action">
+      <button onclick="cetakLembar()" style="background:#2563eb; color:white;">🖨️ Cetak Lembar</button>
+      <button onclick="simpanPDF()" style="background:#16a34a; color:white;">📄 Simpan PDF</button>
+      <button onclick="unduhExcelNilai()" style="background:#ea580c; color:white;">📎 Unduh Excel</button>
+    </div>
+    
+    <div style="margin-top:20px; display: flex; gap: 10px; flex-wrap: wrap;">
+      <button class="btn-success" onclick="kirimNilaiKeSpreadsheet()" style="flex:1">☁️ Kirim ke Spreadsheet (Update LEGER)</button>
+      <button class="btn-primary" onclick="ambilDariSpreadsheet()" style="flex:1">📥 Ambil dari Spreadsheet</button>
+    </div>
+  </section>
+
+  <section id="remedial" class="page">
+    <h2>📝 Data Siswa Wajib Remedial</h2>
+    <div id="remedialListContainer">
+      <p style="color: #666;">Silakan input nilai terlebih dahulu</p>
+    </div>
+    <div class="button-group-action">
+      <button onclick="cetakDaftarRemedial()" style="background:#dc2626; color:white;">🖨️ Cetak Daftar Remedial</button>
+      <button onclick="unduhDaftarRemedial()" style="background:#ea580c; color:white;">📎 Unduh Excel Remedial</button>
+    </div>
+  </section>
+
+  <section id="backup" class="page">
+    <h2>💾 Backup & Restore Data</h2>
+    <div class="backup-panel">
+      <h4>📦 Pengaturan Google Sheets</h4>
+      <label>🔗 URL Apps Script (sudah terisi)</label>
+      <input type="text" id="googleScriptUrl" placeholder="URL Apps Script" style="font-size:12px">
+      <button onclick="simpanGoogleScriptUrl()" style="margin-top:10px; background:#4285f4; color:white; border:none; padding:8px 16px; border-radius:20px;">💾 Simpan URL</button>
+      <button onclick="testGoogleSheetsConnection()" style="margin-top:10px; background:#34a853; color:white; border:none; padding:8px 16px; border-radius:20px;">🔍 Test Koneksi</button>
+    </div>
+    <div class="backup-panel" style="margin-top:16px">
+      <h4>📦 Backup & Restore Lokal (JSON)</h4>
+      <div style="display:flex; gap:10px; flex-wrap:wrap">
+        <button onclick="backupData()">⬇️ Backup ke File JSON</button>
+        <input type="file" id="restoreFileInput" accept=".json" style="display:none" onchange="restoreDataFromFile(this)">
+        <button onclick="document.getElementById('restoreFileInput').click()">↩️ Restore dari JSON</button>
+        <button onclick="resetSemuaData()" class="btn-danger" style="background:#dc2626; color:white;">🗑️ Reset Semua Data</button>
+      </div>
+    </div>
+  </section>
+
+  <div id="printArea" class="print-area">
+    <div style="padding:15px">
+      <h2 id="printSekolah" style="text-align:center">MADRASAH ALIYAH</h2>
+      <div id="printMeta" style="text-align:center"></div>
+      <table id="printTable" style="width:100%;border-collapse:collapse;margin-top:10px;">
+        <thead><tr><th>No</th><th>Nama</th><th>Jml Benar</th><th>Nilai Asli</th><th>Nilai Jadi</th><th>Keterangan</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div style="display:flex; justify-content:space-between; margin-top:30px;">
+        <div style="text-align:center">Mengetahui,<br>Kepala Madrasah<br><br><br><u>_________________</u><br>NIP.</div>
+        <div style="text-align:center">Guru Mata Pelajaran<br><br><br><u id="printNamaGuru">_________________</u><br>NIP.</div>
+      </div>
+    </div>
+  </div>
+  
+  <div id="updateIndicator" class="nilai-update-indicator">✓ Nilai diperbarui</div>
+</main>
+
+<script>
+// ======================== KONFIGURASI ========================
+const DEFAULT_GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw7nlthZxnqxljwauZ3YrOpN7OI8gO_DFRYzRUUvqxNw_J5heE_h37po3gJweaXqlEa/exec";
+
+// ======================== DAFTAR MAPEL & SISWA ========================
+const DAFTAR_MAPEL = [
+  'AlQuranHadis', 'AkidahAkhlak', 'Fikih', 'SKI', 'BahasaArab', 'Aswaja',
+  'PKn', 'BahasaIndonesia', 'BahasaInggris', 'Matematika',
+  'Sejarah', 'Geografi', 'Ekonomi', 'Sosiologi', 'Fisika',
+  'SeniBudaya', 'PJOK', 'Kewirausahaan'
+];
+
+const NAMA_MAPEL = {
+  'AlQuranHadis': 'Al-Qur\'an Hadis', 'AkidahAkhlak': 'Akidah Akhlak',
+  'Fikih': 'Fikih', 'SKI': 'SKI', 'BahasaArab': 'Bahasa Arab',
+  'Aswaja': 'Aswaja', 'PKn': 'PKn', 'BahasaIndonesia': 'Bahasa Indonesia',
+  'BahasaInggris': 'Bahasa Inggris', 'Matematika': 'Matematika',
+  'Sejarah': 'Sejarah', 'Geografi': 'Geografi', 'Ekonomi': 'Ekonomi',
+  'Sosiologi': 'Sosiologi', 'Fisika': 'Fisika',
+  'SeniBudaya': 'Seni Budaya', 'PJOK': 'PJOK', 'Kewirausahaan': 'Kewirausahaan'
+};
+
+const KELAS = ['X', 'XI', 'XII'];
+
+const daftarSiswa = [
+  { nama: 'Adi Saputra', kelas: 'X' }, { nama: 'Aulia Nur Laela', kelas: 'X' },
+  { nama: 'Cipa Nadia Salma', kelas: 'X' }, { nama: 'Dedi Irawan', kelas: 'X' },
+  { nama: 'Farel Saputra', kelas: 'X' }, { nama: 'Irfan', kelas: 'X' },
+  { nama: 'Ismawati Dwi Anggraini', kelas: 'X' }, { nama: 'Luthfi Hakim', kelas: 'X' },
+  { nama: 'M.Riki Saputra', kelas: 'X' }, { nama: 'M.Haris Setiawan', kelas: 'X' },
+  { nama: 'M.Al Imron', kelas: 'X' }, { nama: 'Nayla Himmatul Ulya', kelas: 'X' },
+  { nama: 'Ridho Firmansyah', kelas: 'X' }, { nama: 'Rizal Abdul Haq', kelas: 'X' },
+  { nama: 'Rizki Cahyo Sugeng Wibowo', kelas: 'X' }, { nama: 'Safa Aulia Putri', kelas: 'X' },
+  { nama: 'Shinta Sastya Wati', kelas: 'X' }, { nama: 'Tiyas Farida Sari', kelas: 'X' },
+  { nama: 'Ahmad Iqbal', kelas: 'XI' }, { nama: 'Ahmad Ramadhani', kelas: 'XI' },
+  { nama: 'Argi Setiyawan', kelas: 'XI' }, { nama: 'Aisyah Lu\'lu\'ul Husna', kelas: 'XI' },
+  { nama: 'Anggun Puspita Anggraini', kelas: 'XI' }, { nama: 'Dafa', kelas: 'XI' },
+  { nama: 'Devita Anjani', kelas: 'XI' }, { nama: 'Ferdi Kurniawan', kelas: 'XI' },
+  { nama: 'Fitra Afriza', kelas: 'XI' }, { nama: 'Indah Kasturi Kusuma Putri', kelas: 'XI' },
+  { nama: 'Lefiyana Juwita', kelas: 'XI' }, { nama: 'Marchfel Firdyansah', kelas: 'XI' },
+  { nama: 'Melinda Kusuma Dewi', kelas: 'XI' }, { nama: 'Muhamad yudha Rizky Iftori', kelas: 'XI' },
+  { nama: 'Mohamad Ibnu Rosid', kelas: 'XI' }, { nama: 'Muhammad Bisma Mega Nanda', kelas: 'XI' },
+  { nama: 'Muhammad Rizki Ramdhani', kelas: 'XI' }, { nama: 'Muhammad Fiki Darmawan', kelas: 'XI' },
+  { nama: 'M.Badru Muwafaq', kelas: 'XI' }, { nama: 'Rima', kelas: 'XI' },
+  { nama: 'Rima Ulvania', kelas: 'XI' }, { nama: 'Riski Munandar', kelas: 'XI' },
+  { nama: 'Siti Miftakhul Makmuroh', kelas: 'XI' }, { nama: 'Tomi Jatmiko', kelas: 'XI' },
+  { nama: 'Tia Dwi Saputri', kelas: 'XI' }, { nama: 'Wafiq Khariri', kelas: 'XI' },
+  { nama: 'Yeni Winarni', kelas: 'XI' }, { nama: 'Ainun Nadhiroh', kelas: 'XI' },
+  { nama: 'Dwi Fatimah', kelas: 'XI' }, { nama: 'M.Akbar Panjalu', kelas: 'XI' },
+  { nama: 'Habibatus zakia', kelas: 'XI' }, { nama: 'Angga Dwi Saputra', kelas: 'XI' },
+  { nama: 'M. Aufa Azmi', kelas: 'XI' }, { nama: 'Bayu', kelas: 'XI' },
+  { nama: 'Ananda Ajeng P', kelas: 'XI' }
+];
+
+// ======================== DATA STORAGE ========================
+let nilaiPerMapel = {};
+let identitas = { mapel: '', guru: '', semester: '', tahun: '' };
+let GOOGLE_SCRIPT_URL = '';
+
+// Inisialisasi
+function initGoogleScriptUrl() {
+  let storedUrl = localStorage.getItem('googleScriptUrl');
+  if (!storedUrl) {
+    GOOGLE_SCRIPT_URL = DEFAULT_GOOGLE_SCRIPT_URL;
+    localStorage.setItem('googleScriptUrl', DEFAULT_GOOGLE_SCRIPT_URL);
+  } else {
+    GOOGLE_SCRIPT_URL = storedUrl;
+  }
+  const urlInput = document.getElementById('googleScriptUrl');
+  if (urlInput) urlInput.value = GOOGLE_SCRIPT_URL;
+}
+
+function inisialisasiNilaiPerMapel() {
+  DAFTAR_MAPEL.forEach(mapel => {
+    nilaiPerMapel[mapel] = {};
+    KELAS.forEach(kelas => {
+      nilaiPerMapel[mapel][kelas] = daftarSiswa.filter(s => s.kelas === kelas).map(s => ({
+        nama: s.nama, jBenar: undefined, konversi: undefined, tugasRemedial: ''
+      }));
+    });
+  });
+}
+
+function getNilai(mapel, kelas) { return nilaiPerMapel[mapel]?.[kelas] || []; }
+function updateNilai(mapel, kelas, index, field, value) {
+  if (nilaiPerMapel[mapel]?.[kelas]?.[index]) {
+    nilaiPerMapel[mapel][kelas][index][field] = value;
+    simpanNilaiPerMapelKeLocal();
+  }
+}
+
+function simpanNilaiPerMapelKeLocal() { localStorage.setItem('nilaiPerMapel', JSON.stringify(nilaiPerMapel)); }
+function loadNilaiPerMapelDariLocal() {
+  const stored = localStorage.getItem('nilaiPerMapel');
+  if (stored) { nilaiPerMapel = JSON.parse(stored); } else { inisialisasiNilaiPerMapel(); }
+}
+
+function simpanParameterKeLocal() {
+  const mapel = document.getElementById('mapel').value;
+  const kelas = document.getElementById('kelasSelect').value;
+  if (mapel && kelas) {
+    localStorage.setItem(`param_${mapel}_${kelas}`, JSON.stringify({
+      jum: document.getElementById('jumSoal').value,
+      min: document.getElementById('minKonv').value,
+      max: document.getElementById('maxKonv').value
+    }));
+  }
+}
+
+function loadParameterDariLocal(mapel, kelas) {
+  const stored = localStorage.getItem(`param_${mapel}_${kelas}`);
+  if (stored) {
+    const p = JSON.parse(stored);
+    document.getElementById('jumSoal').value = p.jum || '';
+    document.getElementById('minKonv').value = p.min || '';
+    document.getElementById('maxKonv').value = p.max || '';
+  } else {
+    document.getElementById('jumSoal').value = '';
+    document.getElementById('minKonv').value = '';
+    document.getElementById('maxKonv').value = '';
+  }
+}
+
+function getSiswaRemedial(mapel, kelas) {
+  const data = getNilai(mapel, kelas);
+  const jum = Number(document.getElementById('jumSoal').value);
+  const denganNilai = data.filter(s => s.jBenar !== undefined && !isNaN(s.jBenar) && jum > 0 && s.jBenar >= 0);
+  if (denganNilai.length === 0) return [];
+  const withScore = denganNilai.map(s => ({ ...s, nilaiAsli: (s.jBenar / jum) * 100 })).sort((a,b) => a.nilaiAsli - b.nilaiAsli);
+  if (withScore.length <= 5) return withScore;
+  const nilaiKe5 = withScore[4].nilaiAsli;
+  return withScore.filter(s => s.nilaiAsli <= nilaiKe5);
+}
+
+function hitungDanUpdateTampilanNilai() {
+  const mapel = document.getElementById('mapel').value;
+  const kelas = document.getElementById('kelasSelect').value;
+  if (!mapel || !kelas) return;
+  const jum = Number(document.getElementById('jumSoal').value);
+  const minKonv = Number(document.getElementById('minKonv').value);
+  const maxKonv = Number(document.getElementById('maxKonv').value);
+  const data = getNilai(mapel, kelas);
+  const nilaiAsliList = [];
+  data.forEach(s => { if (s.jBenar !== undefined && !isNaN(s.jBenar) && jum > 0 && s.jBenar >=0 && s.jBenar <= jum) nilaiAsliList.push((s.jBenar/jum)*100); });
+  const minAsli = nilaiAsliList.length ? Math.min(...nilaiAsliList) : 0;
+  const maxAsli = nilaiAsliList.length ? Math.max(...nilaiAsliList) : 0;
+  document.getElementById('autoMinAsli').textContent = nilaiAsliList.length ? minAsli.toFixed(2) : 'N/A';
+  document.getElementById('autoMaxAsli').textContent = nilaiAsliList.length ? maxAsli.toFixed(2) : 'N/A';
+  
+  const remedial = getSiswaRemedial(mapel, kelas);
+  const remedialSet = new Set(remedial.map(s => s.nama));
+  const rows = document.querySelectorAll('#tblInputNilai tbody tr');
+  rows.forEach((row, idx) => {
+    if (idx >= data.length) return;
+    const s = data[idx];
+    const nilaiAsliCell = row.querySelector('.nilaiAsli');
+    const nilaiKonvCell = row.querySelector('.nilaiKonversi');
+    if (s.jBenar !== undefined && !isNaN(s.jBenar) && jum > 0 && s.jBenar >=0 && s.jBenar <= jum) {
+      const nilaiAsli = (s.jBenar/jum)*100;
+      nilaiAsliCell.textContent = nilaiAsli.toFixed(2);
+      let nilaiJadi = 0;
+      if (minAsli !== maxAsli && minKonv < maxKonv) {
+        if (nilaiAsli <= minAsli) nilaiJadi = minKonv;
+        else if (nilaiAsli >= maxAsli) nilaiJadi = maxKonv;
+        else nilaiJadi = Math.round(((nilaiAsli - minAsli)/(maxAsli - minAsli))*(maxKonv - minKonv) + minKonv);
+      }
+      nilaiKonvCell.textContent = nilaiJadi;
+      if (s.konversi !== nilaiJadi) updateNilai(mapel, kelas, idx, 'konversi', nilaiJadi);
+    } else {
+      nilaiAsliCell.textContent = '0';
+      nilaiKonvCell.textContent = '0';
+    }
+    if (remedialSet.has(s.nama) && s.jBenar !== undefined) row.classList.add('remedial-row');
+    else row.classList.remove('remedial-row');
+  });
+  updateRemedialInfo(mapel, kelas);
+}
+
+function updateRemedialInfo(mapel, kelas) {
+  const remedial = getSiswaRemedial(mapel, kelas);
+  const info = document.getElementById('remedialInfo');
+  const text = document.getElementById('remedialCountText');
+  document.getElementById('totalRemedial').textContent = remedial.length;
+  if (remedial.length) {
+    info.style.display = 'block';
+    text.innerHTML = `${remedial.length} siswa wajib remedial (5 nilai terendah)`;
+  } else info.style.display = 'none';
+}
+
+function renderInputNilai() {
+  const mapel = document.getElementById('mapel').value;
+  const kelas = document.getElementById('kelasSelect').value;
+  const tbody = document.querySelector('#tblInputNilai tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  if (!mapel || !kelas) return;
+  const data = getNilai(mapel, kelas);
+  data.forEach((s, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${i+1}</td>
+      <td>${escapeHtml(s.nama)}</td>
+      <td><input type="number" class="input-nilai-jBenar" data-index="${i}" data-mapel="${mapel}" data-kelas="${kelas}" value="${s.jBenar !== undefined && s.jBenar !== null ? s.jBenar : ''}" style="width:80px" onchange="updateJBenar(this)"></td>
+      <td class="nilaiAsli">0</td>
+      <td class="nilaiKonversi">0</td>
+    `;
+    tbody.appendChild(tr);
+  });
+  hitungDanUpdateTampilanNilai();
+}
+
+function updateJBenar(input) {
+  const idx = parseInt(input.dataset.index);
+  const mapel = input.dataset.mapel;
+  const kelas = input.dataset.kelas;
+  const jum = Number(document.getElementById('jumSoal').value);
+  let val = input.value === '' ? undefined : Number(input.value);
+  if (val !== undefined && !isNaN(val) && jum > 0 && val > jum) {
+    alert(`Jawaban benar tidak boleh melebihi ${jum}`);
+    input.value = '';
+    val = undefined;
+  }
+  updateNilai(mapel, kelas, idx, 'jBenar', val);
+  hitungDanUpdateTampilanNilai();
+}
+
+function gantiKelas() {
+  const mapel = document.getElementById('mapel').value;
+  const kelas = document.getElementById('kelasSelect').value;
+  if (mapel && kelas) loadParameterDariLocal(mapel, kelas);
+  renderInputNilai();
+  renderRemedialPage();
+}
+
+function renderRemedialPage() {
+  const container = document.getElementById('remedialListContainer');
+  const mapel = document.getElementById('mapel').value;
+  const kelas = document.getElementById('kelasSelect').value;
+  if (!mapel || !kelas) { container.innerHTML = '<p>Pilih mapel dan kelas</p>'; return; }
+  const remedial = getSiswaRemedial(mapel, kelas);
+  if (!remedial.length) { container.innerHTML = '<p>✅ Tidak ada siswa remedial</p>'; return; }
+  const jum = Number(document.getElementById('jumSoal').value);
+  let html = `<div class="remedial-info"><strong>${remedial.length} siswa wajib remedial</strong></div><div class="table-wrapper"><table><thead><tr><th>No</th><th>Nama</th><th>J.Benar</th><th>Nilai</th><th>Tugas Remedial</th><th>Aksi</th></tr></thead><tbody>`;
+  remedial.forEach((s, i) => {
+    html += `<tr style="background:#fee2e2"><td>${i+1}</td><td>${escapeHtml(s.nama)}</td><td>${s.jBenar}</td><td>${((s.jBenar/jum)*100).toFixed(2)}</td>
+      <td><input type="text" id="tugas_${i}" value="${escapeHtml(s.tugasRemedial||'')}" style="width:100%; padding:5px; border-radius:8px;"></td>
+      <td><button onclick="simpanTugas('${escapeHtml(s.nama)}', document.getElementById('tugas_${i}').value)">💾</button></td></tr>`;
+  });
+  html += `</tbody></table></div>`;
+  container.innerHTML = html;
+}
+
+function simpanTugas(nama, tugas) {
+  const mapel = document.getElementById('mapel').value;
+  const kelas = document.getElementById('kelasSelect').value;
+  const data = getNilai(mapel, kelas);
+  const idx = data.findIndex(s => s.nama === nama);
+  if (idx !== -1) updateNilai(mapel, kelas, idx, 'tugasRemedial', tugas);
+  alert('Tugas remedial disimpan');
+}
+
+function updateCounts() {
+  document.getElementById('countX').textContent = daftarSiswa.filter(s => s.kelas === 'X').length;
+  document.getElementById('countXI').textContent = daftarSiswa.filter(s => s.kelas === 'XI').length;
+  document.getElementById('countXII').textContent = daftarSiswa.filter(s => s.kelas === 'XII').length;
+}
+
+function escapeHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function simpanIdentitasDanPindah() {
+  identitas.mapel = document.getElementById('mapel').value;
+  identitas.guru = document.getElementById('namaGuru').value;
+  identitas.semester = document.getElementById('semester').value;
+  identitas.tahun = document.getElementById('tahunPelajaran').value;
+  localStorage.setItem('identitas', JSON.stringify(identitas));
+  
+  document.getElementById('activeMapel').textContent = NAMA_MAPEL[identitas.mapel] || identitas.mapel;
+  document.getElementById('activeGuru').textContent = identitas.guru || '-';
+  document.getElementById('activeSemester').textContent = identitas.semester;
+  document.getElementById('activeTahun').textContent = identitas.tahun;
+  
+  loadParameterDariLocal(identitas.mapel, 'X');
+  renderInputNilai();
+  renderRemedialPage();
+  
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('show'));
+  document.getElementById('inputnilai').classList.add('show');
+  closeSidebar();
+  alert('Identitas tersimpan! Silakan input nilai.');
+}
+
+function loadIdentitas() {
+  const stored = localStorage.getItem('identitas');
+  if (stored) {
+    identitas = JSON.parse(stored);
+    document.getElementById('mapel').value = identitas.mapel || 'AlQuranHadis';
+    document.getElementById('namaGuru').value = identitas.guru || '';
+    document.getElementById('semester').value = identitas.semester || 'Ganjil';
+    document.getElementById('tahunPelajaran').value = identitas.tahun || '2024/2025';
+  }
+}
+
+function simpanGoogleScriptUrl() {
+  const url = document.getElementById('googleScriptUrl').value;
+  if (url) { localStorage.setItem('googleScriptUrl', url); GOOGLE_SCRIPT_URL = url; alert('URL disimpan'); }
+}
+
+async function testGoogleSheetsConnection() {
+  const url = GOOGLE_SCRIPT_URL;
+  if (!url) { alert('URL tidak tersedia'); return; }
+  try {
+    const response = await fetch(`${url}?action=ping`, { method: 'GET', mode: 'cors' });
+    const result = await response.json();
+    if (result.success) {
+      document.getElementById('gsStatusBadge').className = 'status-badge active';
+      document.getElementById('gsStatusText').innerHTML = '✅ Google Sheets terhubung';
+      alert('✅ Koneksi ke Google Sheets berhasil!');
+    } else {
+      throw new Error('Response not success');
+    }
+  } catch(e) { 
+    document.getElementById('gsStatusBadge').className = 'status-badge inactive';
+    document.getElementById('gsStatusText').innerHTML = '⚠️ Google Sheets tidak terhubung (CORS/offline)';
+    alert('⚠️ Gagal terkoneksi. Pastikan Apps Script telah di-deploy.');
+  }
+}
+
+async function kirimNilaiKeSpreadsheet() {
+  const url = GOOGLE_SCRIPT_URL;
+  if (!url) { alert('URL Google Sheets tidak tersedia'); return; }
+  
+  const kelas = document.getElementById('kelasSelect').value;
+  if (!kelas) { alert('Pilih kelas'); return; }
+  
+  // Kumpulkan semua nilai jadi untuk kelas ini
+  const nilaiPerSiswa = {};
+  for (const mapel of DAFTAR_MAPEL) {
+    nilaiPerSiswa[mapel] = {};
+    const dataNilai = getNilai(mapel, kelas);
+    for (const siswa of dataNilai) {
+      if (siswa.konversi && siswa.konversi > 0) {
+        nilaiPerSiswa[mapel][siswa.nama] = siswa.konversi;
+      }
+    }
+  }
+  
+  const dataToSend = {
+    action: 'updateLeger',
+    kelas: kelas,
+    nilaiPerSiswa: nilaiPerSiswa,
+    identitas: { 
+      mapel: NAMA_MAPEL[document.getElementById('mapel').value],
+      guru: identitas.guru, 
+      semester: identitas.semester, 
+      tahun: identitas.tahun 
+    }
+  };
+  
+  const btn = event.target;
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '⏳ Mengirim...';
+  btn.disabled = true;
+  
+  try {
+    const response = await fetch(url, { 
+      method: 'POST', 
+      mode: 'cors', 
+      headers: { 'Content-Type': 'application/json' }, 
+      body: JSON.stringify(dataToSend) 
+    });
+    const result = await response.json();
+    if (result.success) {
+      alert(`✅ Nilai Kelas ${kelas} berhasil dikirim ke Spreadsheet!\nLEGER dan Riwayat Semester telah diperbarui.`);
+    } else {
+      alert('❌ Gagal: ' + (result.error || 'Unknown error'));
+    }
+  } catch(e) { 
+    alert('❌ Gagal: ' + e.message); 
+  }
+  finally { btn.innerHTML = originalText; btn.disabled = false; }
+}
+
+async function ambilDariSpreadsheet() {
+  const url = GOOGLE_SCRIPT_URL;
+  if (!url) { alert('URL Google Sheets tidak tersedia'); return; }
+  
+  const kelas = document.getElementById('kelasSelect').value;
+  if (!kelas) { alert('Pilih kelas'); return; }
+  
+  try {
+    const response = await fetch(`${url}?action=getLeger&kelas=${kelas}`, { method: 'GET', mode: 'cors' });
+    const result = await response.json();
+    if (result.success && result.data) {
+      alert('Data LEGER berhasil diambil! Lihat di console.');
+      console.log('Data LEGER:', result.data);
+    } else {
+      alert('Gagal mengambil data');
+    }
+  } catch(e) { alert('❌ Gagal: ' + e.message); }
+}
+
+function backupData() {
+  const data = { 
+    nilaiPerMapel, 
+    identitas, 
+    params: {},
+    tanggal: new Date().toISOString()
+  };
+  DAFTAR_MAPEL.forEach(m => { 
+    KELAS.forEach(k => { 
+      const key = `param_${m}_${k}`; 
+      const val = localStorage.getItem(key); 
+      if(val) data.params[key]=val; 
+    }); 
+  });
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+  const a = document.createElement('a'); 
+  a.href = URL.createObjectURL(blob); 
+  a.download = `backup_ma_${new Date().toISOString().slice(0,19)}.json`; 
+  a.click();
+  URL.revokeObjectURL(blob);
+}
+
+function restoreDataFromFile(input) {
+  const file = input.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if(data.nilaiPerMapel) { nilaiPerMapel = data.nilaiPerMapel; simpanNilaiPerMapelKeLocal(); }
+      if(data.identitas) { localStorage.setItem('identitas', JSON.stringify(data.identitas)); loadIdentitas(); }
+      if(data.params) { Object.entries(data.params).forEach(([k,v]) => localStorage.setItem(k,v)); }
+      alert('Restore berhasil!'); location.reload();
+    } catch(err) { alert('File tidak valid'); }
+  };
+  reader.readAsText(file);
+}
+
+function resetSemuaData() {
+  if(confirm('PERINGATAN! Ini akan menghapus SEMUA data nilai. Lanjutkan?')) {
+    localStorage.clear();
+    inisialisasiNilaiPerMapel();
+    identitas = { mapel: '', guru: '', semester: '', tahun: '' };
+    alert('Semua data telah direset!');
+    location.reload();
+  }
+}
+
+function cetakLembar() {
+  const mapel = document.getElementById('mapel').value;
+  const kelas = document.getElementById('kelasSelect').value;
+  if(!mapel || !kelas) { alert('Pilih mapel dan kelas'); return; }
+  const jum = Number(document.getElementById('jumSoal').value);
+  if(!jum) { alert('Isi jumlah soal'); return; }
+  document.getElementById('printMeta').innerHTML = `${NAMA_MAPEL[mapel]} | ${identitas.semester} | ${identitas.tahun} | Kelas ${kelas}`;
+  document.getElementById('printNamaGuru').innerHTML = identitas.guru || '_________________';
+  const tbody = document.querySelector('#printTable tbody');
+  const data = getNilai(mapel, kelas);
+  const remedial = getSiswaRemedial(mapel, kelas);
+  const remedialSet = new Set(remedial.map(s=>s.nama));
+  tbody.innerHTML = '';
+  data.forEach((s,i) => {
+    const jBenar = s.jBenar || 0;
+    const nilaiAsli = jBenar && jum ? ((jBenar/jum)*100).toFixed(2) : '0';
+    const nilaiJadi = s.konversi || '0';
+    const ket = remedialSet.has(s.nama) && jBenar ? 'REMEDIAL' : '';
+    tbody.innerHTML += `<tr><td>${i+1}</td><td>${escapeHtml(s.nama)}</td><td>${jBenar}</td><td>${nilaiAsli}</td><td>${nilaiJadi}</td><td>${ket}</td></tr>`;
+  });
+  document.getElementById('printArea').style.display = 'block';
+  window.print();
+  document.getElementById('printArea').style.display = 'none';
+}
+
+function simpanPDF() {
+  const { jsPDF } = window.jspdf;
+  const mapel = document.getElementById('mapel').value;
+  const kelas = document.getElementById('kelasSelect').value;
+  if(!mapel||!kelas) return alert('Pilih mapel dan kelas');
+  const jum = Number(document.getElementById('jumSoal').value);
+  if(!jum) return alert('Isi jumlah soal');
+  const doc = new jsPDF();
+  doc.text(`${NAMA_MAPEL[mapel]} - Kelas ${kelas}`, 105, 20, { align: 'center' });
+  const data = getNilai(mapel, kelas);
+  const remedial = getSiswaRemedial(mapel, kelas);
+  const remedialSet = new Set(remedial.map(s=>s.nama));
+  const body = data.map((s,i) => [i+1, s.nama, s.jBenar||0, s.jBenar&&jum?((s.jBenar/jum)*100).toFixed(2):'0', s.konversi||0, remedialSet.has(s.nama)&&s.jBenar?'REMEDIAL':'']);
+  doc.autoTable({ head: [['No','Nama','J.Benar','Nilai Asli','Nilai Jadi','Ket']], body, startY: 30 });
+  doc.save(`Nilai_${mapel}_${kelas}.pdf`);
+}
+
+function unduhExcelNilai() {
+  const mapel = document.getElementById('mapel').value;
+  const kelas = document.getElementById('kelasSelect').value;
+  if(!mapel||!kelas) return alert('Pilih mapel dan kelas');
+  const jum = Number(document.getElementById('jumSoal').value);
+  const data = getNilai(mapel, kelas);
+  const remedial = getSiswaRemedial(mapel, kelas);
+  const remedialSet = new Set(remedial.map(s=>s.nama));
+  const wsData = [['No','Nama','J.Benar','Nilai Asli','Nilai Jadi','Keterangan']];
+  data.forEach((s,i) => {
+    wsData.push([i+1, s.nama, s.jBenar||0, s.jBenar&&jum?((s.jBenar/jum)*100).toFixed(2):'0', s.konversi||0, remedialSet.has(s.nama)&&s.jBenar?'REMEDIAL':'']);
+  });
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Nilai');
+  XLSX.writeFile(wb, `Nilai_${mapel}_${kelas}.xlsx`);
+}
+
+function cetakDaftarRemedial() {
+  const mapel = document.getElementById('mapel').value;
+  const kelas = document.getElementById('kelasSelect').value;
+  const remedial = getSiswaRemedial(mapel, kelas);
+  if(!remedial.length) { alert('Tidak ada siswa remedial'); return; }
+  const html = `<html><head><title>Daftar Remedial</title><style>table{border-collapse:collapse;width:100%} th,td{border:1px solid #ccc;padding:8px}</style></head>
+    <body><h2 style="text-align:center">Daftar Siswa Remedial</h2><p>${NAMA_MAPEL[mapel]} - Kelas ${kelas}</p>
+    <table><thead><tr><th>No</th><th>Nama</th><th>J.Benar</th><th>Tugas Remedial</th></tr></thead><tbody>
+    ${remedial.map((s,i)=>`<tr><td>${i+1}</td><td>${s.nama}</td><td>${s.jBenar}</td><td>${s.tugasRemedial||'-'}</td></tr>`).join('')}
+    </tbody></table></body></html>`;
+  const w = window.open('', '_blank');
+  w.document.write(html);
+  w.document.close();
+  w.print();
+}
+
+function unduhDaftarRemedial() {
+  const mapel = document.getElementById('mapel').value;
+  const kelas = document.getElementById('kelasSelect').value;
+  const remedial = getSiswaRemedial(mapel, kelas);
+  if(!remedial.length) { alert('Tidak ada siswa remedial'); return; }
+  const wsData = [['No','Nama','J.Benar','Tugas Remedial']];
+  remedial.forEach((s,i) => wsData.push([i+1, s.nama, s.jBenar, s.tugasRemedial||'']));
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Remedial');
+  XLSX.writeFile(wb, `Remedial_${mapel}_${kelas}.xlsx`);
+}
+
+// ======================== SIDEBAR ========================
+const sidebar = document.getElementById('sidebar'), overlay = document.getElementById('overlay'), toggleBtn = document.getElementById('toggleBtn');
+function openSidebar() { sidebar.classList.add('open'); overlay.classList.add('show'); }
+function closeSidebar() { sidebar.classList.remove('open'); overlay.classList.remove('show'); }
+toggleBtn.addEventListener('click', () => { if(sidebar.classList.contains('open')) closeSidebar(); else openSidebar(); });
+overlay.addEventListener('click', closeSidebar);
+document.querySelectorAll('.sidebar ul li').forEach(li => {
+  li.addEventListener('click', () => {
+    const page = li.dataset.page;
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('show'));
+    document.getElementById(page).classList.add('show');
+    closeSidebar();
+    if(page === 'remedial') renderRemedialPage();
+  });
+});
+
+// ======================== INIT ========================
+initGoogleScriptUrl();
+loadNilaiPerMapelDariLocal();
+loadIdentitas();
+updateCounts();
+document.getElementById('kelasSelect').value = 'X';
+setTimeout(() => { testGoogleSheetsConnection(); }, 1000);
+</script>
+</body>
+</html>
